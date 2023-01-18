@@ -1,0 +1,5 @@
+function recursion() {
+  recursion();
+}
+
+recursion();
