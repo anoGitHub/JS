@@ -1,17 +1,21 @@
 const fs = require("fs");
 const request = require("request");
 
-const fileName = "./nodejs/zaliczenie/data.json";
+const fileName = "data.json";
+let numberFromFile;
+let newFileName;
 
 if (fileName != "") {
   fs.readFile(fileName, "utf-8", (error, data) => {
     if (error) {
-      console.log("Odczyt się nie udał");
+      console.log("Odczyt danych z pliku się nie udał");
+      process.exit(0);
     } else {
       const dataFromFile = JSON.parse(data);
-      const numberFromFile = dataFromFile.number;
-      const newFileName = dataFromFile.fileName; // czemu nie dziala?
+      numberFromFile = dataFromFile.number;
+      newFileName = dataFromFile.filename;
       const serverAddress = `http://numbersapi.com/${numberFromFile}`;
+
       request(serverAddress, (err, response, body) => {
         if (err) {
           console.log("Błąd połączenia z serwerem");
@@ -19,7 +23,7 @@ if (fileName != "") {
           console.log("Otrzymano odpowiedź z serwera");
           if (response.statusCode === 200) {
             try {
-              fs.writeFile("file.json", body, (error) => {
+              fs.writeFile(newFileName, body, (error) => {
                 if (error) {
                   console.log("Zapis się nie udał");
                 } else {
@@ -40,3 +44,5 @@ if (fileName != "") {
 } else {
   console.log("Nie podano pliku");
 }
+
+// node 04.js
