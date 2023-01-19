@@ -1,77 +1,71 @@
-const request = require("request");
+const axios = require("axios");
 const argv = require("yargs").argv;
 
-const userName = argv.name;
-const displayFollowers = true; //argv.disp;
-console.log(displayFollowers);
-let city = "";
-const baseurl = `https://api.github.com/users/octocat`;
-//${userName}`;
-const userRepoURL = baseurl + "/repos";
-const weatherURL = `https://api.openweathermap.org/data/2.5/weather?appid=0ed761300a2725ca778c07831ae64d6e&q=San%20Francisco`;
+let userName;
+let userLocation;
+let followers;
 
-let options = {
-  //   url: weatherURL,
-  url: baseurl,
-  host: "api.github.com",
-  method: "GET",
-  headers: { "user-agent": "node.js" },
+if (argv.userName === null) {
+  console.log("Nie podano nazwy uzytkownika");
+  process.exit(0);
+} else {
+  userName = argv.userName;
+}
+if (argv.followers == "true") {
+  followers = true;
+} else followers = false;
+
+const getUserData = (userName) => {
+  const baseurl = `https://api.github.com/users/${userName}`;
+  const userRepoURL = baseurl + "/repos";
+  const options = {
+    host: "api.github.com",
+    method: "GET",
+    headers: { "user-agent": "node.js" },
+  };
+  return axios.get(baseurl, options).then((response) => response.data);
 };
-// function getUserLocation() {
-//   request(options, (error, response, body) => {
-//     if (!error && response.statusCode === 200) {
-//       const userData = JSON.parse(body);
-//       const userLocation = userData.location;
-//       console.log(userLocation);
-//       return userLocation;
-//     } else {
-//       console.log("Weather not found or network connection issues");
-//     }
-//   });
-// }
-// getUserLocation();
-// if (argv.disp != "" || null) {
 
-if (displayFollowers == true) {
-  request(options, (error, response, body) => {
-    console.log("i am herer");
-    if (!error && response.statusCode === 200) {
-      const userData = JSON.parse(body);
-      const followers = userData.followers;
-      console.log(followers);
-    } else {
-      console.log("Weather not found or network connection issues");
+const getReposData = (userName) => {
+  const userRepoURL = `https://api.github.com/users/${userName}/repos`;
+  const options = {
+    host: "api.github.com",
+    method: "GET",
+    headers: { "user-agent": "node.js" },
+  };
+  return axios.get(userRepoURL, options).then((response) => response.data);
+};
+
+const getUserWeather = (userLocation) => {
+  const weatherURL =
+    `https://api.openweathermap.org/data/2.5/weather?appid=0ed761300a2725ca778c07831ae64d6e&q=` +
+    encodeURIComponent(userLocation);
+  console.log(weatherURL);
+  return axios.get(weatherURL).then((response) => response.data);
+};
+
+getUserData(userName)
+  .then((user) => {
+    console.log("User login is: " + user.login);
+    // userLocation = user.location;
+    console.log("User location is: " + user.location);
+    if (followers) {
+      console.log("User has " + user.followers + " followers");
     }
-  });
-}
-// }
-// function getUserWeatherForUserLocation() {
-//   request(options, (error, response, body) => {
-//     if (!error && response.statusCode === 200) {
-//       const weatherData = JSON.parse(body);
+    return getReposData(user.login);
+  })
+  .then((repos) => {
+    let reposCount = repos.filter((item) => item.name).length;
+    console.log(`Users has ${reposCount} repositories: `);
+    repos.forEach((repo) => console.log("• " + repo.name));
+  })
+  .catch((error) => console.log("Something bad happened 1"));
 
-//       console.log(weatherData.weather[0].description);
-//     } else {
-//       console.log("Weather not found or network connection issues");
-//     }
-//   });
-// }
-// getUserWeatherForUserLocation();
-// function callback(error, response, body) {
-//   const baseurl = `https://api.github.com/users/${userName}`;
-//   if (!error && response.statusCode === 200) {
-//     const user = JSON.parse(body);
-//     let repoNames = user.map((users) => {
-//       return users.name;
-//     });
-//     console.log(repoNames);
-//     const weatherURL = `https://api.openweathermap.org/data/2.5/weather?appid=0ed761300a2725ca778c07831ae64d6e&q=${city}`;
-//   } else {
-//     console.log("User not found or network connection issues");
-//   }
-// }
-
-// request(options, callback);
-if (argv.disp == "true") {
-  console.log(process.argv);
-}
+getUserData(userName)
+  .then((user) => {
+    return getUserWeather(user.location);
+  })
+  .then((weather) => {
+    console.log(weather);
+  })
+  .catch((error) => console.log("Something bad happened 2"));
