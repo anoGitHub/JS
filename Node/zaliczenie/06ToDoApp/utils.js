@@ -24,6 +24,7 @@ const createTodo = (title, todo) => {
         });
         dataJSON = JSON.stringify(todos);
         fs.writeFileSync(fileName, dataJSON);
+        console.log("To do task added.");
       } else {
         console.log("New Todo title has already been used");
       }
@@ -34,11 +35,16 @@ const createTodo = (title, todo) => {
 };
 
 const listTodo = () => {
+  const todos = fetchToDos();
+  console.log(todos);
+};
+
+const fetchToDos = () => {
   try {
     const todoBuffer = fs.readFileSync(fileName);
     let dataJSON = todoBuffer.toString();
     const todos = JSON.parse(dataJSON);
-    console.log(todos);
+    return todos;
   } catch (error) {
     console.log("An error during listing occured");
   }
@@ -46,13 +52,19 @@ const listTodo = () => {
 
 const deleteTodo = (title) => {
   try {
-    const todos = listTodo();
-    const filteredToDos = todos.filter((todo) => todo.title !== title);
+    const todoBuffer = fs.readFileSync(fileName);
+    let dataJSON = todoBuffer.toString();
+    const todos = JSON.parse(dataJSON);
 
-    dataJSON = JSON.stringify(filteredToDos);
+    const filter = todos.filter((item) => {
+      return item.title != title;
+    });
+
+    dataJSON = JSON.stringify(filter);
+
     fs.writeFileSync(fileName, dataJSON);
   } catch (error) {
-    console.log("An error during delete occured");
+    console.log("An error during to-do deletion");
   }
 };
 
