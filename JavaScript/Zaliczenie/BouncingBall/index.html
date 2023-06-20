@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Bouncing Simulator</title>
+    <script src="./app.js"></script>
+    <style>
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body onload="app.draw()">
+    <div>
+      <div>
+        <button onclick="app.move()">Move</button>
+        <button onclick="app.animate(75)">Throw a ball</button>
+        <button onclick="app.stopAnimate()">Stop</button>
+      </div>
+      <canvas
+        id="board"
+        width="600"
+        height="800"
+        style="border: 1px solid #000000"
+      ></canvas>
+    </div>
+  </body>
+</html>
