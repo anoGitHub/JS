@@ -220,7 +220,7 @@ class App {
     this.currentInterval;
     this.wallImage = textures.wall;
     this.ballImage = textures.ball;
-    this.portalImage = textures.portal;
+    this.checkImage = textures.portal;
     this.finishImage = textures.finish;
   }
   clearCanvas() {
@@ -252,7 +252,7 @@ class App {
             ctx.drawImage(this.ballImage, renderX, renderY, 50, 50);
           }
           if (this.board[y][x] === "Y") {
-            ctx.drawImage(this.portalImage, renderX, renderY, 50, 50);
+            ctx.drawImage(this.checkImage, renderX, renderY, 50, 50);
           }
           if (this.board[y][x] === "0") {
             ctx.clearRect(renderX, renderY, 50, 50);
@@ -320,12 +320,6 @@ class App {
   animate(speed) {
     this.currentInterval = setInterval(() => {
       this.move();
-      if (
-        this.position[0] === this.finishCondition[0] &&
-        this.position[1] === this.finishCondition[1]
-      ) {
-        this.stopAnimate();
-      }
     }, speed);
   }
 
