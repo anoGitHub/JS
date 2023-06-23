@@ -23,13 +23,6 @@ const schema = mongoose.Schema(
         default: new Date(),
       },
       lastActivity: Date,
-      // valuation: {
-      //   type: Number,
-      //   // walidacja
-      //   min: 0,
-      //   max: 100,
-      //   required: true,
-      // },
       email: String,
     },
     comments: [],
@@ -41,13 +34,6 @@ const schema = mongoose.Schema(
       },
     },
     display: Number,
-    // valuation: {
-    //   type: Number,
-    //   // walidacja
-    //   min: 0,
-    //   max: 100,
-    //   required: true,
-    // },
   },
   { timestamp: true }
 );
