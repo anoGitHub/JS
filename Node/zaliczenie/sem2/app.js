@@ -3,7 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const routes = require("./api/routes");
 const UserModel = require("./models/UserModel");
-const uri = process.env.MONGODB_CONNECTION;
+const uri = process.env.CONNECTION_STRING;
 const saveApiCallToLogs = require("./logs");
 
 const args = process.argv.slice(1);
@@ -26,15 +26,24 @@ mongoose
   .connect(
     uri,
     {
-      useUnifiedTopology: true,
       useNewUrlParser: true,
+      useUnifiedTopology: true,
     },
     console.log(`DB running on ${uri}`)
   )
   .then(async () => {
-    const admin1 = new UserModel({ email: "admin1@o2.pl", password: "haslo1" });
-    const admin2 = new UserModel({ email: "admin2@o2.pl", password: "haslo2" });
-    const admin3 = new UserModel({ email: "admin3@o2.pl", password: "haslo3" });
+    const admin1 = new UserModel({
+      email: "admin1@abc.pl",
+      password: "haslo1",
+    });
+    const admin2 = new UserModel({
+      email: "admin2@abc.pl",
+      password: "haslo2",
+    });
+    const admin3 = new UserModel({
+      email: "admin3@abc.pl",
+      password: "haslo3",
+    });
     const users = await UserModel.find();
     if (users.length === 0) {
       UserModel.create(admin1, admin2, admin3);

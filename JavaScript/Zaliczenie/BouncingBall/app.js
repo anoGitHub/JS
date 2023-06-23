@@ -142,25 +142,25 @@ class obstaclesDetector {
   run(board, position) {
     let wall = this.detectWalls(board, position);
     let corners = this.detectCorners(board, position);
-    let corner = {
+    let obstacle = {
       upRight: false,
       upLeft: false,
       downLeft: false,
       downRight: false,
     };
     if ((wall.left && wall.up) || corners.upLeft) {
-      corner.upLeft = true;
+      obstacle.upLeft = true;
     }
     if ((wall.left && wall.down) || corners.downLeft) {
-      corner.downLeft = true;
+      obstacle.downLeft = true;
     }
     if ((wall.right && wall.up) || corners.upRight) {
-      corner.upRight = true;
+      obstacle.upRight = true;
     }
     if ((wall.right && wall.down) || corners.downRight) {
-      corner.downRight = true;
+      obstacle.downRight = true;
     }
-    let result = Object.assign(corner, wall);
+    let result = Object.assign(obstacle, wall);
     return result;
   }
 }
@@ -192,16 +192,10 @@ class TextureSet {
     ball.src = this.directory + this.ballSrc;
     let portal = new Image();
     portal.src = this.directory + this.portalSrc;
-    const background = (canvasId) => {
-      document.getElementById(canvasId).style.background = `url(${
-        this.directory + this.backgroundSrc
-      })`;
-    };
     return {
       wall,
       ball,
       portal,
-      background,
     };
   }
 }

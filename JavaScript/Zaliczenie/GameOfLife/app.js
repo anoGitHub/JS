@@ -37,52 +37,58 @@ class CellChecker {
     // Check if the cell above and to the left exists within the board boundaries
     if (y - 1 > -1) {
       if (x - 1 > -1) {
+        // up left
         miniBoard[0].push(board[y - 1][x - 1]);
       } else {
         miniBoard[0].push(0);
       }
 
-      //up left
-      miniBoard[0].push(board[y - 1][x]);
       //up
+      miniBoard[0].push(board[y - 1][x]);
+
+      //up right
       if (x + 1 < board[0].length) {
         miniBoard[0].push(board[y - 1][x + 1]);
       } else {
         miniBoard[0].push(0);
       }
-      //up right
+
+      //else
     } else {
       miniBoard[0].push(0); //up left
       miniBoard[0].push(0); //up
       miniBoard[0].push(0); //up right
     }
+
     if (x - 1 > -1) {
       miniBoard[1].push(board[y][x - 1]);
     } else {
       miniBoard[1].push(0);
     }
-    //left
+
     if (x + 1 < board[1].length) {
       miniBoard[1].push(board[y][x + 1]);
     } else {
       miniBoard[1].push(0);
     }
-    //right
+
+    //down
     if (y + 1 < board.length) {
       if (x - 1 > -1) {
+        //down left
         miniBoard[2].push(board[y + 1][x - 1]);
       } else {
         miniBoard[2].push(0);
       }
-      //down left
-      miniBoard[2].push(board[y + 1][x]);
       //down
+      miniBoard[2].push(board[y + 1][x]);
+
+      //down right
       if (x + 1 < board[2].length) {
         miniBoard[2].push(board[y + 1][x + 1]);
       } else {
         miniBoard[2].push(0);
       }
-      //down right
     } else {
       miniBoard[2].push(0); //down left
       miniBoard[2].push(0); //down
@@ -91,7 +97,7 @@ class CellChecker {
     return miniBoard;
   }
 
-  neigbourCount(miniBoard) {
+  neighbourCount(miniBoard) {
     let livingCells = 0;
     for (let y = 0; y < miniBoard.length; y++) {
       for (let x = 0; x < miniBoard[y].length; x++) {
@@ -103,7 +109,7 @@ class CellChecker {
     return livingCells;
   }
   init(board, x, y) {
-    return this.neigbourCount(this.createMiniBoard(board, x, y));
+    return this.neighbourCount(this.createMiniBoard(board, x, y));
   }
 }
 

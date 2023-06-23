@@ -58,15 +58,15 @@ router.get("/advertisement", async (req, res) => {
     } = req.query;
 
     if (title) {
-      query.$text = { $search: title };
+      query.title = { $regex: title, $options: "i" };
     }
 
     if (description) {
-      query.$text = { ...query.$text, $search: description };
+      query.description = { $regex: description, $options: "i" };
     }
 
     if (ownerName) {
-      query["owner.name"] = { $regex: ownerName, $options: "i" };
+      query["owner.name"] = { $regex: ownerName, $options: "i" }; //case-insensitive search
     }
 
     if (createdFrom && createdTo) {
