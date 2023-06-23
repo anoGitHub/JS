@@ -5,6 +5,7 @@ const UserModel = require("../models/UserModel");
 const status = require("http-status");
 const _ = require("lodash");
 const path = require("path");
+const mongoose = require("mongoose");
 
 const filePath = path.join(__dirname, "../404.jpg");
 
