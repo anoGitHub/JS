@@ -1,233 +1,167 @@
 const express = require("express");
 const router = express.Router();
-const Advertisment = require("../models/Advertisment");
+const Advertisement = require("../models/Advertisement");
 const UserModel = require("../models/UserModel");
 const status = require("http-status");
 const _ = require("lodash");
+const path = require("path");
 
-//dodawanie ogłoszenia
-router.post("/advertisments", async (req, res) => {
-  const newAdd = new Advertisment({ ...req.body });
-  const result = await newAdd.save((err, result) => {
-    if (err) {
-      res.statusCode = status.INTERNAL_SERVER_ERROR;
-    } else {
-      res.statusCode = status.CREATED;
-      res.send(result);
-    }
-  });
+const filePath = path.join(__dirname, "../404.jpg");
+
+router.get("/heartbeat", (req, res) => {
+  const currentTime = new Date().toLocaleString();
+  res.send(currentTime);
 });
 
-//heartbeat
-router.get("/heartbeat", (req, res) => res.send(new Date()));
+router.post("/advertisements", async (req, res) => {
+  try {
+    const newAdd = new Advertisement({ ...req.body });
+    const savedModel = await newAdd.save();
+    res.status(201).send(savedModel);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
 
-//wyszukiwanie wszystkich ogloszeń
-router.get("/advertisments", async (req, res) => {
-  const adds = await Advertisment.find();
+router.get("/advertisements", async (req, res) => {
+  const adds = await Advertisement.find();
   res.send(adds);
 });
 
-//wyszukiwanie ogłoszenia po id
-router.get("/advertisments/:id", async (req, res) => {
+router.get("/advertisements/:id", async (req, res) => {
   try {
-    const advertisment = await Advertisment.findOne({ _id: req.params.id });
+    const advertisement = await Advertisement.findOne({ _id: req.params.id });
 
-    if (advertisment) {
-      res.status(200).send(advertisment);
+    if (advertisement) {
+      res.status(200).send(advertisement);
     } else {
-      return res.status(404).send({ error: "Advertisment doesn't exist!" });
+      res.status(404).sendFile(filePath);
     }
-  } catch {
-    res.statusCode = status.INTERNAL_SERVER_ERROR;
-    res.send();
+  } catch (error) {
+    res.status(500).send({ error: "Internal server error" });
   }
 });
 
-//usuwanie ogłoszenia
-router.delete("/advertisments/:id", async (req, res) => {
+router.get("/advertisement", async (req, res) => {
   try {
-    const user = await UserModel.findOne({ password: req.body.password });
-    if (user) {
-      const advertisment = await Advertisment.findOne({ _id: req.params.id });
-      if (advertisment) {
-        await Advertisment.deleteOne({ _id: req.params.id });
-        res.status(204).send();
+    const query = {};
+
+    const {
+      title,
+      description,
+      createdFrom,
+      createdTo,
+      priceFrom,
+      priceTo,
+      ownerName,
+    } = req.query;
+
+    if (title) {
+      query.$text = { $search: title };
+    }
+
+    if (description) {
+      query.$text = { ...query.$text, $search: description };
+    }
+
+    if (ownerName) {
+      query["owner.name"] = { $regex: ownerName, $options: "i" };
+    }
+
+    if (createdFrom && createdTo) {
+      const fromDate = new Date(createdFrom);
+      const toDate = new Date(createdTo);
+
+      if (!isNaN(fromDate) && !isNaN(toDate)) {
+        query.createdTime = { $gte: fromDate, $lte: toDate };
       } else {
-        res.status(404);
-        res.send({ error: "Advertisment doesn't exist!" });
+        return res.status(400).send({ error: "Invalid date parameters" });
       }
-    } else {
-      res.statusCode = status.UNAUTHORIZED;
-      res.send();
     }
-  } catch {
-    res.statusCode = status.INTERNAL_SERVER_ERROR;
-    res.send();
-  }
-});
 
-//aktualizacja ogłoszenia z autoryzacja hasłem
-// router.patch("/advertisments/:id", async (req, res) => {
-//   try {
-//     UserModel.findOne({ password: req.body.password }).then((user) => {
-//       if (user) {
-//         if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-//           Advertisment.findByIdAndUpdate(req.params.id, req.body.advert).then(
-//             (err, advert) => {
-//               if (advert) {
-//                 res.statusCode = status.OK;
+    if (priceFrom && priceTo) {
+      const fromPrice = parseFloat(priceFrom);
+      const toPrice = parseFloat(priceTo);
 
-//                 res.send(advert);
-//               } else {
-//                 res.statusCode = status.NOT_FOUND;
-
-//                 res.send({ error: "Record not found" });
-//               }
-//             }
-//           );
-//         } else {
-//           res.statusCode = status.UNPROCESSABLE_ENTITY;
-//           res.send({ error: "Wrong ObjectId" });
-//         }
-//       } else {
-//         res.statusCode = status.UNAUTHORIZED;
-//         res.send();
-//       }
-//     });
-//   } catch {
-//     res.statusCode = status.INTERNAL_SERVER_ERROR;
-//     res.send();
-//   }
-// });
-
-// aktualizacja ogłoszenia z autoryzacja hasłem i sprawdzeniem czy jest to ogłoszenie dodane przed danego uytkownika
-router.patch("/advertisments/:id", async (req, res) => {
-  try {
-    const user = await UserModel.findOne({ password: req.body.password });
-    const checkId = req.params.id.match(/^[0-9a-fA-F]{24}$/);
-    if (user) {
-      if (checkId) {
-        const advert = await Advertisment.findById(req.params.id);
-        if (advert) {
-          if (advert.owner.email === user.email) {
-            const updatedAdvert = await Advertisment.findByIdAndUpdate(
-              req.params.id,
-              req.body.advert
-            );
-            res.statusCode = status.OK;
-            res.send();
-          } else {
-            res.statusCode = status.UNAUTHORIZED;
-            res.send({ error: "This is not Your advert" });
-          }
-        } else {
-          res.statusCode = status.NOT_FOUND;
-          res.send({ error: "Record not found" });
-        }
+      if (!isNaN(fromPrice) && !isNaN(toPrice)) {
+        query.price = { $gte: fromPrice, $lte: toPrice };
       } else {
-        res.statusCode = status.UNPROCESSABLE_ENTITY;
-        res.send({ error: "Wrong ObjectId" });
+        return res.status(400).send({ error: "Invalid price parameters" });
       }
-    } else {
-      res.statusCode = status.UNAUTHORIZED;
-      res.send();
     }
-  } catch {
-    res.statusCode = status.INTERNAL_SERVER_ERROR;
-    res.send();
+
+    const advertisements = await Advertisement.find(query);
+
+    if (advertisements.length > 0) {
+      res.status(200).send(advertisements);
+    } else {
+      res.status(404).sendFile(filePath);
+    }
+  } catch (error) {
+    res.status(500).send({ error: "Internal server error" });
   }
 });
 
-router.get("/advertisment", async (req, res) => {
+router.delete("/advertisements/:id", async (req, res) => {
   try {
-    if (!req.query) {
-      res.statusCode = status.UNPROCESSABLE_ENTITY;
-      res.send({ error: "Required query params missing" });
-    } else {
-      const advertisments = [];
+    const { password } = req.body;
 
-      const {
-        title,
-        description,
-        createdFrom,
-        createdTo,
-        priceFrom,
-        priceTo,
-        ownerName,
-      } = req.query;
-      if (title) {
-        advertisments.push(
-          await Advertisment.find({
-            title: { $regex: "^" + title, $options: "i" },
-          })
-        );
-      }
+    // Find the user by password (assuming password is unique)
+    const user = await UserModel.findOne({ password });
 
-      if (description) {
-        advertisments.push(
-          await Advertisment.find({
-            description: { $regex: "^" + description, $options: "i" },
-          })
-        );
-      }
-
-      if (ownerName) {
-        advertisments.push(
-          await Advertisment.find({
-            "owner.name": { $regex: "^" + ownerName, $options: "i" },
-          })
-        );
-      }
-      if (createdFrom && createdTo) {
-        let datePattern = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
-
-        if (datePattern.test(createdFrom) && datePattern.test(createdTo)) {
-          advertisments.push(
-            await Advertisment.find({
-              createdTime: {
-                $gte: `${createdFrom}T00:00:00.978Z`,
-                $lt: `${createdTo}T23:59:59.978Z`,
-              },
-            })
-          );
-        } else {
-          res.statusCode = status.UNPROCESSABLE_ENTITY;
-          res.send({
-            error:
-              "Wrong date format,date parameter should be in this format: YYYY/MM/DD",
-          });
-        }
-      }
-
-      if (priceFrom && priceTo) {
-        console.log(parseFloat(priceTo));
-        if (!isNaN(parseFloat(priceFrom)) && !isNaN(parseFloat(priceTo))) {
-          advertisments.push(
-            await Advertisment.find({
-              price: {
-                $gte: priceFrom,
-                $lt: priceTo,
-              },
-            })
-          );
-        } else {
-          res.statusCode = status.UNPROCESSABLE_ENTITY;
-          res.send({
-            error: "Price should be of type number",
-          });
-        }
-      }
-      if (advertisments.length > 0) {
-        res.status(200).send(advertisments);
-      } else {
-        return res
-          .status(404)
-          .send({ error: "Advertisments with this criteria don't exist." });
-      }
+    if (!user) {
+      return res.status(401).send({ error: "Unauthorized" });
     }
-  } catch {
-    res.statusCode = status.INTERNAL_SERVER_ERROR;
-    res.send();
+
+    const advertisement = await Advertisement.findOne({ _id: req.params.id });
+    if (advertisement) {
+      await Advertisement.deleteOne({ _id: req.params.id });
+      return res.status(204).send();
+    } else {
+      res.status(404).sendFile(filePath);
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal Server Error" });
   }
 });
+
+router.patch("/advertisements/:id", async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    const user = await UserModel.findOne({ password });
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+
+    if (!user) {
+      return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    if (!isValidObjectId) {
+      return res.status(422).send({ error: "Invalid ID format" });
+    }
+
+    const advert = await Advertisement.findById(req.params.id);
+    if (!advert) {
+      res.status(404).sendFile(filePath);
+    }
+
+    if (advert.owner.email !== user.email) {
+      return res.status(401).send({ error: "This is not your advertisement" });
+    }
+
+    const updatedAdvert = await Advertisement.findByIdAndUpdate(
+      req.params.id,
+      req.body.advert,
+      { new: true }
+    );
+
+    return res.status(200).send(updatedAdvert);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
